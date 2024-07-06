@@ -41,9 +41,9 @@ async function deployMultiSigWallet(
         : undefined;
 }
 
-async function deployToken(deployer: Wallet, owner: string): Promise<ACC> {
+async function deployToken(deployer: Wallet, owner: string, feeAccount: string): Promise<ACC> {
     const factory = await ethers.getContractFactory("ACC");
-    const contract = (await factory.connect(deployer).deploy(owner)) as ACC;
+    const contract = (await factory.connect(deployer).deploy(owner, feeAccount)) as ACC;
     await contract.deployed();
     await contract.deployTransaction.wait();
     return contract;
@@ -51,7 +51,7 @@ async function deployToken(deployer: Wallet, owner: string): Promise<ACC> {
 
 describe("Test for ACC token", () => {
     const raws = HardhatAccount.keys.map((m) => new Wallet(m, ethers.provider));
-    const [deployer, account0, account1, account2, account3, account4] = raws;
+    const [deployer, feeAccount, account0, account1, account2, account3, account4] = raws;
     const owners1 = [account0, account1, account2];
 
     let multiSigFactory: MultiSigWalletFactory;
@@ -86,7 +86,7 @@ describe("Test for ACC token", () => {
 
     it("Create Token, Owner is wallet", async () => {
         const factory = await ethers.getContractFactory("ACC");
-        await expect(factory.connect(deployer).deploy(account0.address)).to.be.revertedWith(
+        await expect(factory.connect(deployer).deploy(account0.address, feeAccount.address)).to.be.revertedWith(
             "function call to a non-contract account"
         );
     });
@@ -94,7 +94,7 @@ describe("Test for ACC token", () => {
     it("Create Token, Owner is MultiSigWallet", async () => {
         assert.ok(multiSigWallet);
 
-        token = await deployToken(deployer, multiSigWallet.address);
+        token = await deployToken(deployer, multiSigWallet.address, feeAccount.address);
         assert.deepStrictEqual(await token.getOwner(), multiSigWallet.address);
         assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), BigNumber.from(0));
     });

@@ -3867,10 +3867,10 @@ loupe@^2.3.6:
   dependencies:
     get-func-name "^2.0.1"
 
-loyalty-tokens@~2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/loyalty-tokens/-/loyalty-tokens-2.0.0.tgz#5e9e24674598fd8cdf43f14462ff8ca898da19f2"
-  integrity sha512-XDKfITphWr+DYSO0RGl/Kec8WA7UQ7odskcmllK0Kr2eomX+jkmKa19tNEKVsD0IBHx3TsaIMqLp57MPRMG7fg==
+loyalty-tokens@~2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/loyalty-tokens/-/loyalty-tokens-2.1.1.tgz#d075824da6147de45f2fc3dd540f5d4ca0178b5b"
+  integrity sha512-jcrAiuO6tTPBWuvUGToiAlJWXe+l0Jmp7CC/5ZtmbXu7dJJ2cKG+PaClve5C+BRAaqKelJSrUhx+l6TJN8HZIg==
   dependencies:
     "@openzeppelin/contracts" "^4.9.5"
     multisig-wallet-contracts "^2.0.0"

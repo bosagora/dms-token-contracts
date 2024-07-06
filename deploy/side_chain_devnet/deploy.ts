@@ -26,6 +26,7 @@ interface IDeployedContract {
 
 interface IAccount {
     deployer: Wallet;
+    feeAccount: Wallet;
 }
 
 type FnDeployer = (accounts: IAccount, deployment: Deployments) => void;
@@ -48,10 +49,11 @@ class Deployments {
         this.deployers = [];
 
         const raws = HardhatAccount.keys.map((m) => new Wallet(m, ethers.provider));
-        const [deployer] = raws;
+        const [deployer, feeAccount] = raws;
 
         this.accounts = {
             deployer,
+            feeAccount,
         };
     }
 
@@ -196,7 +198,7 @@ async function deployToken(accounts: IAccount, deployment: Deployments) {
     const factory = await ethers.getContractFactory("ACC");
     const contract = (await factory
         .connect(accounts.deployer)
-        .deploy(deployment.getContractAddress("MultiSigWallet"))) as ACC;
+        .deploy(deployment.getContractAddress("MultiSigWallet"), deployment.accounts.feeAccount.address)) as ACC;
     await contract.deployed();
     await contract.deployTransaction.wait();
 

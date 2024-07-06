@@ -42,9 +42,9 @@ async function deployMultiSigWallet(
         : undefined;
 }
 
-async function deployToken(deployer: Wallet, owner: string): Promise<ACC> {
+async function deployToken(deployer: Wallet, owner: string, feeAccount: string): Promise<ACC> {
     const factory = await ethers.getContractFactory("ACC");
-    const contract = (await factory.connect(deployer).deploy(owner)) as ACC;
+    const contract = (await factory.connect(deployer).deploy(owner, feeAccount)) as ACC;
     await contract.deployed();
     await contract.deployTransaction.wait();
     return contract;
@@ -52,7 +52,7 @@ async function deployToken(deployer: Wallet, owner: string): Promise<ACC> {
 
 describe("Test for ACC token", () => {
     const raws = HardhatAccount.keys.map((m) => new Wallet(m, ethers.provider));
-    const [deployer, account0, account1, account2, account3, account4, account5] = raws;
+    const [deployer, feeAccount, account0, account1, account2, account3, account4, account5] = raws;
     const owners1 = [account0, account1, account2];
 
     let multiSigFactory: MultiSigWalletFactory;
@@ -88,7 +88,7 @@ describe("Test for ACC token", () => {
     it("Create Token, Owner is MultiSigWallet", async () => {
         assert.ok(multiSigWallet);
 
-        token = await deployToken(deployer, multiSigWallet.address);
+        token = await deployToken(deployer, multiSigWallet.address, feeAccount.address);
         assert.deepStrictEqual(await token.getOwner(), multiSigWallet.address);
         assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), BigNumber.from(0));
     });
@@ -173,7 +173,7 @@ describe("Test for ACC token", () => {
         const signature = ContractUtils.signMessage(account3, message);
         await expect(
             token.delegatedTransfer(account4.address, account5.address, amount, expiry, signature)
-        ).to.be.revertedWith("Invalid signature");
+        ).to.be.revertedWith("BIP20DelegatedTransfer: Invalid signature");
     });
 
     it("Transfer from account4 to account5 - Expired signature", async () => {
@@ -192,7 +192,7 @@ describe("Test for ACC token", () => {
         const signature = ContractUtils.signMessage(account4, message);
         await expect(
             token.delegatedTransfer(account4.address, account5.address, amount, expiry, signature)
-        ).to.be.revertedWith("Expired signature");
+        ).to.be.revertedWith("BIP20DelegatedTransfer: Expired signature");
     });
 
     it("Transfer from account4 to account5", async () => {
@@ -212,5 +212,35 @@ describe("Test for ACC token", () => {
         await token.delegatedTransfer(account4.address, account5.address, amount, expiry, signature);
 
         assert.deepStrictEqual(await token.balanceOf(account5.address), amount);
+    });
+
+    it("Transfer with fee from account4 to account5", async () => {
+        const oldBalance4 = await token.balanceOf(account4.address);
+        const oldBalance5 = await token.balanceOf(account5.address);
+        const oldBalanceFee = await token.balanceOf(feeAccount.address);
+        const protocolFee = await token.getProtocolFee();
+
+        const amount = BOACoin.make(500).value;
+        const nonce = await token.nonceOf(account4.address);
+        const expiry = ContractUtils.getTimeStamp() + 12 * 5;
+        const message = ContractUtils.getTransferMessage(
+            ethers.provider.network.chainId,
+            token.address,
+            account4.address,
+            account5.address,
+            amount,
+            nonce,
+            expiry
+        );
+        const signature = ContractUtils.signMessage(account4, message);
+        await token.delegatedTransferWithFee(account4.address, account5.address, amount, expiry, signature);
+
+        const newBalance4 = await token.balanceOf(account4.address);
+        const newBalance5 = await token.balanceOf(account5.address);
+        const newBalanceFee = await token.balanceOf(feeAccount.address);
+
+        assert.deepStrictEqual(newBalanceFee.sub(oldBalanceFee), protocolFee);
+        assert.deepStrictEqual(newBalance5.sub(oldBalance5), amount.sub(protocolFee));
+        assert.deepStrictEqual(oldBalance4.sub(newBalance4), amount);
     });
 });

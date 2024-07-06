@@ -8,5 +8,5 @@ contract ACC is LoyaltyToken {
     /*
      * Public functions
      */
-    constructor(address account_) LoyaltyToken("ACC Coin", "ACC", account_) {}
+    constructor(address account_, address feeAccount_) LoyaltyToken("ACC Coin", "ACC", account_, feeAccount_) {}
 }

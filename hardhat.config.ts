@@ -25,6 +25,17 @@ function getAccounts() {
         accounts.push(process.env.DEPLOYER);
     }
 
+    if (
+        process.env.PROTOCOL_FEE !== undefined &&
+        process.env.PROTOCOL_FEE.trim() !== "" &&
+        reg_bytes64.test(process.env.PROTOCOL_FEE)
+    ) {
+        accounts.push(process.env.PROTOCOL_FEE);
+    } else {
+        process.env.PROTOCOL_FEE = Wallet.createRandom().privateKey;
+        accounts.push(process.env.PROTOCOL_FEE);
+    }
+
     while (accounts.length < 50) {
         accounts.push(Wallet.createRandom().privateKey);
     }
