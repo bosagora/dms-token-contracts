@@ -26,7 +26,9 @@ interface IDeployedContract {
 
 interface IAccount {
     deployer: Wallet;
+    owner: Wallet;
     feeAccount: Wallet;
+    tokenOwners: Wallet[];
 }
 
 type FnDeployer = (accounts: IAccount, deployment: Deployments) => void;
@@ -37,11 +39,6 @@ class Deployments {
     public accounts: IAccount;
     private MULTI_SIG_WALLET_FACTORY_CONTRACT: Contract | undefined;
 
-    public ownersOfMultiSigWallet: string[] = [
-        "0x2312c098Cef41C0F55350bC3Ad8F4AFf983d9432",
-        "0x5AD84fF1bD71cDEa7C3083706F2D1232a453C604",
-        "0x9630fF452211Cc95BBFa32c0C4cF68eB498b8549",
-    ];
     public requiredMultiSigWallet: number = 2;
 
     constructor() {
@@ -49,11 +46,13 @@ class Deployments {
         this.deployers = [];
 
         const raws = HardhatAccount.keys.map((m) => new Wallet(m, ethers.provider));
-        const [deployer, feeAccount] = raws;
+        const [deployer, owner, feeAccount, tokenOwner1, tokenOwner2, tokenOwner3] = raws;
 
         this.accounts = {
             deployer,
+            owner,
             feeAccount,
+            tokenOwners: [tokenOwner1, tokenOwner2, tokenOwner3],
         };
     }
 
@@ -164,9 +163,13 @@ async function deployMultiSigWallet(accounts: IAccount, deployment: Deployments)
     const factoryContract = deployment.getContract("MultiSigWalletFactory") as MultiSigWalletFactory;
 
     const address = await ContractUtils.getEventValueString(
-        await factoryContract
-            .connect(accounts.deployer)
-            .create("OwnerWallet", "", deployment.ownersOfMultiSigWallet, deployment.requiredMultiSigWallet, 1),
+        await factoryContract.connect(accounts.deployer).create(
+            "OwnerWallet",
+            "",
+            deployment.accounts.tokenOwners.map((m) => m.address),
+            deployment.requiredMultiSigWallet,
+            1
+        ),
         factoryContract.interface,
         "ContractInstantiation",
         "wallet"
@@ -211,6 +214,84 @@ async function deployToken(accounts: IAccount, deployment: Deployments) {
     console.log(`Deployed ${contractName} to ${contract.address}`);
 }
 
+async function mintInitialSupplyToken(accounts: IAccount, deployment: Deployments) {
+    const contractName = "LoyaltyToken";
+
+    const contract = deployment.getContract("ACC") as ACC;
+
+    const amount = BOACoin.make(10_000_000_000);
+
+    const encodedData = contract.interface.encodeFunctionData("mint", [amount.value]);
+    const wallet = deployment.getContract("MultiSigWallet") as MultiSigWallet;
+    const transactionId = await ContractUtils.getEventValueBigNumber(
+        await wallet
+            .connect(accounts.tokenOwners[0])
+            .submitTransaction("Mint", `Mint ${amount.toDisplayString()}`, contract.address, 0, encodedData),
+        wallet.interface,
+        "Submission",
+        "transactionId"
+    );
+
+    if (transactionId === undefined) {
+        console.error(`Failed to submit transaction for token mint`);
+    } else {
+        const executedTransactionId = await ContractUtils.getEventValueBigNumber(
+            await wallet.connect(accounts.tokenOwners[1]).confirmTransaction(transactionId),
+            wallet.interface,
+            "Execution",
+            "transactionId"
+        );
+
+        if (executedTransactionId === undefined || !transactionId.eq(executedTransactionId)) {
+            console.error(`Failed to confirm transaction for token mint`);
+        }
+    }
+
+    console.log(`Mint ${contractName} to ${wallet.address}`);
+}
+
+async function distributeToken(accounts: IAccount, deployment: Deployments) {
+    const contractName = "LoyaltyToken";
+
+    const contract = deployment.getContract("ACC") as ACC;
+
+    const amount = BOACoin.make(5_000_000_000);
+
+    const encodedData = contract.interface.encodeFunctionData("transfer", [accounts.owner.address, amount.value]);
+    const wallet = deployment.getContract("MultiSigWallet") as MultiSigWallet;
+    const transactionId = await ContractUtils.getEventValueBigNumber(
+        await wallet
+            .connect(accounts.tokenOwners[0])
+            .submitTransaction(
+                "Transfer",
+                `Transfer ${amount.toDisplayString()} to ${accounts.owner.address}`,
+                contract.address,
+                0,
+                encodedData
+            ),
+        wallet.interface,
+        "Submission",
+        "transactionId"
+    );
+
+    if (transactionId === undefined) {
+        console.error(`Failed to submit transaction for token transfer`);
+    } else {
+        const executedTransactionId = await ContractUtils.getEventValueBigNumber(
+            await wallet.connect(accounts.tokenOwners[1]).confirmTransaction(transactionId),
+            wallet.interface,
+            "Execution",
+            "transactionId"
+        );
+
+        if (executedTransactionId === undefined || !transactionId.eq(executedTransactionId)) {
+            console.error(`Failed to confirm transaction for token transfer`);
+        }
+    }
+
+    console.log(`Distribute ${contractName}`);
+}
+
 async function main() {
     const deployments = new Deployments();
 
@@ -219,6 +300,8 @@ async function main() {
     // deployments.addDeployer(deployMultiSigWalletFactory);
     deployments.addDeployer(deployMultiSigWallet);
     deployments.addDeployer(deployToken);
+    deployments.addDeployer(mintInitialSupplyToken);
+    deployments.addDeployer(distributeToken);
 
     await deployments.loadContractInfo();
 
