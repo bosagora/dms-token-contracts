@@ -58,6 +58,7 @@ describe("Test for ACC token", () => {
     let multiSigWallet: MultiSigWallet | undefined;
     let token: ACC;
     const requiredConfirmations = 2;
+    let totalSupply = BigNumber.from(0);
 
     before(async () => {
         multiSigFactory = await deployMultiSigWalletFactory(deployer);
@@ -111,11 +112,12 @@ describe("Test for ACC token", () => {
         await expect(token.connect(account0).mint(amount)).to.be.revertedWith("Only the owner can execute");
     });
 
-    it("mint initial supply", async () => {
+    it("mint 1", async () => {
         assert.ok(multiSigWallet);
         assert.ok(token);
 
-        const initialSupply = BigNumber.from(10).pow(BigNumber.from(28));
+        const initialSupply = BigNumber.from(10).pow(BigNumber.from(27)).mul(5);
+        totalSupply = BigNumber.from(initialSupply);
 
         const mintEncoded = token.interface.encodeFunctionData("mint", [initialSupply]);
 
@@ -140,33 +142,22 @@ describe("Test for ACC token", () => {
         assert.deepStrictEqual(transactionId, executedTransactionId);
 
         // Check balance of target
-        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), initialSupply);
+        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), totalSupply);
     });
 
-    it("Fail transfer", async () => {
-        const amount = BigNumber.from(10).pow(BigNumber.from(18));
-        await expect(token.connect(account0).transfer(account4.address, amount)).to.be.revertedWith(
-            "ERC20: transfer amount exceeds balance"
-        );
-    });
-
-    it("Success transfer", async () => {
+    it("mint 2", async () => {
         assert.ok(multiSigWallet);
         assert.ok(token);
 
-        const initialSupply = BigNumber.from(10)
-            .pow(BigNumber.from(10))
-            .mul(BigNumber.from(10).pow(BigNumber.from(18)));
-        const amount = BigNumber.from(10).pow(BigNumber.from(18));
+        const additionalSupply = BigNumber.from(10).pow(BigNumber.from(27)).mul(3);
+        totalSupply = totalSupply.add(additionalSupply);
 
-        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), initialSupply);
-
-        const mintEncoded = token.interface.encodeFunctionData("transfer", [account4.address, amount]);
+        const mintEncoded = token.interface.encodeFunctionData("mint", [additionalSupply]);
 
         const transactionId = await ContractUtils.getEventValueBigNumber(
             await multiSigWallet
                 .connect(account0)
-                .submitTransaction("Transfer", "Transfer 1 token", token.address, 0, mintEncoded),
+                .submitTransaction("Mint", "Mint 1 token", token.address, 0, mintEncoded),
             multiSigWallet.interface,
             "Submission",
             "transactionId"
@@ -184,9 +175,72 @@ describe("Test for ACC token", () => {
         assert.deepStrictEqual(transactionId, executedTransactionId);
 
         // Check balance of target
-        assert.deepStrictEqual(await token.balanceOf(account4.address), amount);
+        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), totalSupply);
+    });
 
-        // Check balance of wallet
-        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), initialSupply.sub(amount));
+    it("mint 3", async () => {
+        assert.ok(multiSigWallet);
+        assert.ok(token);
+
+        const additionalSupply = BigNumber.from(10).pow(BigNumber.from(27)).mul(2);
+        totalSupply = totalSupply.add(additionalSupply);
+
+        const mintEncoded = token.interface.encodeFunctionData("mint", [additionalSupply]);
+
+        const transactionId = await ContractUtils.getEventValueBigNumber(
+            await multiSigWallet
+                .connect(account0)
+                .submitTransaction("Mint", "Mint 1 token", token.address, 0, mintEncoded),
+            multiSigWallet.interface,
+            "Submission",
+            "transactionId"
+        );
+        assert.ok(transactionId !== undefined);
+
+        const executedTransactionId = await ContractUtils.getEventValueBigNumber(
+            await multiSigWallet.connect(account1).confirmTransaction(transactionId),
+            multiSigWallet.interface,
+            "Execution",
+            "transactionId"
+        );
+
+        // Check that transaction has been executed
+        assert.deepStrictEqual(transactionId, executedTransactionId);
+
+        // Check balance of target
+        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), totalSupply);
+    });
+
+    it("mint 4", async () => {
+        assert.ok(multiSigWallet);
+        assert.ok(token);
+
+        const additionalSupply = BigNumber.from(1);
+        totalSupply = totalSupply.add(additionalSupply);
+
+        const mintEncoded = token.interface.encodeFunctionData("mint", [additionalSupply]);
+
+        const transactionId = await ContractUtils.getEventValueBigNumber(
+            await multiSigWallet
+                .connect(account0)
+                .submitTransaction("Mint", "Mint 1 token", token.address, 0, mintEncoded),
+            multiSigWallet.interface,
+            "Submission",
+            "transactionId"
+        );
+        assert.ok(transactionId !== undefined);
+
+        const executedTransactionId = await ContractUtils.getEventValueBigNumber(
+            await multiSigWallet.connect(account1).confirmTransaction(transactionId),
+            multiSigWallet.interface,
+            "Execution",
+            "transactionId"
+        );
+
+        // Check that transaction has been executed
+        assert.notDeepStrictEqual(transactionId, executedTransactionId);
+
+        // Check balance of target
+        assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), totalSupply.sub(1));
     });
 });

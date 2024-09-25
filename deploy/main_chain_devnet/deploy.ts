@@ -6,7 +6,7 @@ import { BOACoin } from "../../src/utils/Amount";
 import { ContractUtils } from "../../src/utils/ContractUtils";
 import { ACC, MultiSigWallet, MultiSigWalletFactory } from "../../typechain-types";
 
-import { BaseContract, Contract, Wallet } from "ethers";
+import { BaseContract, BigNumber, Contract, Wallet } from "ethers";
 
 import fs from "fs";
 
@@ -198,7 +198,11 @@ async function deployToken(accounts: IAccount, deployment: Deployments) {
     const factory = await ethers.getContractFactory("ACC");
     const contract = (await factory
         .connect(accounts.deployer)
-        .deploy(deployment.getContractAddress("MultiSigWallet"), deployment.accounts.feeAccount.address)) as ACC;
+        .deploy(
+            deployment.getContractAddress("MultiSigWallet"),
+            deployment.accounts.feeAccount.address,
+            BigNumber.from(10).pow(BigNumber.from(28))
+        )) as ACC;
     await contract.deployed();
     await contract.deployTransaction.wait();
 

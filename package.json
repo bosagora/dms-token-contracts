@@ -1,6 +1,6 @@
 {
     "name": "acc-token-contracts",
-    "version": "1.1.1",
+    "version": "1.4.0",
     "description": "The smart contract source code of ACC Coin Project",
     "files": [
         "**/*.sol"
@@ -16,7 +16,8 @@
         "formatting:check": "prettier '**/*.{json,sol,ts,js,md}' -c",
         "formatting:write": "prettier '**/*.{json,sol,ts,js,md}' --write",
         "test:DelegatedTransfer": "hardhat test test/DelegatedTransfer.test.ts",
-        "test:MultiSigToken": "hardhat test test/MultiSigToken.test.ts"
+        "test:MultiSigToken": "hardhat test test/MultiSigToken.test.ts",
+        "test:MaxSupply": "hardhat test test/MaxSupply.test.ts"
     },
     "repository": {
         "type": "git",
@@ -59,7 +60,7 @@
     },
     "dependencies": {
         "@openzeppelin/contracts": "~4.9.5",
-        "loyalty-tokens": "~2.1.1",
+        "loyalty-tokens": "~2.3.0",
         "multisig-wallet-contracts": "~2.0.0"
     }
 }
