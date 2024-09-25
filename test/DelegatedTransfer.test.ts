@@ -42,9 +42,9 @@ async function deployMultiSigWallet(
         : undefined;
 }
 
-async function deployToken(deployer: Wallet, owner: string, feeAccount: string): Promise<ACC> {
+async function deployToken(deployer: Wallet, owner: string, feeAccount: string, maxSupply: BigNumber): Promise<ACC> {
     const factory = await ethers.getContractFactory("ACC");
-    const contract = (await factory.connect(deployer).deploy(owner, feeAccount)) as ACC;
+    const contract = (await factory.connect(deployer).deploy(owner, feeAccount, maxSupply)) as ACC;
     await contract.deployed();
     await contract.deployTransaction.wait();
     return contract;
@@ -88,7 +88,12 @@ describe("Test for ACC token", () => {
     it("Create Token, Owner is MultiSigWallet", async () => {
         assert.ok(multiSigWallet);
 
-        token = await deployToken(deployer, multiSigWallet.address, feeAccount.address);
+        token = await deployToken(
+            deployer,
+            multiSigWallet.address,
+            feeAccount.address,
+            BigNumber.from(10).pow(BigNumber.from(28))
+        );
         assert.deepStrictEqual(await token.getOwner(), multiSigWallet.address);
         assert.deepStrictEqual(await token.balanceOf(multiSigWallet.address), BigNumber.from(0));
     });
