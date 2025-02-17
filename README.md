@@ -20,7 +20,7 @@ npm install -g yarn
 ## Install Project
 
 ```shell
-git clone https://github.com/acc-coin/acc-token-contracts.git
+git clone https://github.com/kios-coin/kios-token-contracts.git
 cd acc-token-contracts
 yarn install
 ```

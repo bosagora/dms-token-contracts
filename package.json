@@ -1,6 +1,6 @@
 {
-    "name": "acc-token-contracts",
-    "version": "1.4.0",
+    "name": "kios-token-contracts",
+    "version": "2.0.0",
     "description": "The smart contract source code of ACC Coin Project",
     "files": [
         "**/*.sol"
@@ -21,14 +21,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/acc-coin/acc-token-contracts.git"
+        "url": "git+https://github.com/kios-coin/kios-token-contracts.git"
     },
     "author": "ACC",
     "license": "AGPL-3.0-or-later",
     "bugs": {
-        "url": "https://github.com/acc-coin/acc-token-contracts/issues"
+        "url": "https://github.com/kios-coin/kios-token-contracts/issues"
     },
-    "homepage": "https://github.com/acc-coin/acc-token-contracts#readme",
+    "homepage": "https://github.com/kios-coin/kios-token-contracts#readme",
     "devDependencies": {
         "@ethersproject/constants": "^5.7.0",
         "@nomiclabs/hardhat-ethers": "^2.2.3",

@@ -4,9 +4,9 @@ import { ethers } from "hardhat";
 import { HardhatAccount } from "../../src/HardhatAccount";
 import { BOACoin } from "../../src/utils/Amount";
 import { ContractUtils } from "../../src/utils/ContractUtils";
-import { ACC, MultiSigWallet, MultiSigWalletFactory } from "../../typechain-types";
+import { KIOS, MultiSigWallet, MultiSigWalletFactory } from "../../typechain-types";
 
-import { BaseContract, BigNumber, Contract, Wallet } from "ethers";
+import { BaseContract, Contract, Wallet } from "ethers";
 
 import fs from "fs";
 
@@ -188,28 +188,24 @@ async function deployMultiSigWallet(accounts: IAccount, deployment: Deployments)
 }
 
 async function deployToken(accounts: IAccount, deployment: Deployments) {
-    const contractName = "ACC";
+    const contractName = "KIOS";
     console.log(`Deploy ${contractName}...`);
     if (deployment.getContract("MultiSigWallet") === undefined) {
         console.error("Contract is not deployed!");
         return;
     }
 
-    const factory = await ethers.getContractFactory("ACC");
+    const factory = await ethers.getContractFactory("KIOS");
     const contract = (await factory
         .connect(accounts.deployer)
-        .deploy(
-            deployment.getContractAddress("MultiSigWallet"),
-            deployment.accounts.feeAccount.address,
-            BigNumber.from(10).pow(BigNumber.from(28))
-        )) as ACC;
+        .deploy(deployment.getContractAddress("MultiSigWallet"), deployment.accounts.feeAccount.address)) as KIOS;
     await contract.deployed();
     await contract.deployTransaction.wait();
 
     const owner = await contract.getOwner();
     const balance = await contract.balanceOf(owner);
-    console.log(`ACC token's owner: ${owner}`);
-    console.log(`ACC token's balance of owner: ${new BOACoin(balance).toDisplayString(true, 2)}`);
+    console.log(`KIOS token's owner: ${owner}`);
+    console.log(`KIOS token's balance of owner: ${new BOACoin(balance).toDisplayString(true, 2)}`);
 
     deployment.addContract(contractName, contract.address, contract);
     console.log(`Deployed ${contractName} to ${contract.address}`);

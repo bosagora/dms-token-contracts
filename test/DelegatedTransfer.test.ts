@@ -3,7 +3,7 @@ import "@nomiclabs/hardhat-waffle";
 import { ethers } from "hardhat";
 
 import { HardhatAccount } from "../src/HardhatAccount";
-import { ACC, MultiSigWallet, MultiSigWalletFactory } from "../typechain-types";
+import { KIOS, MultiSigWallet, MultiSigWalletFactory } from "../typechain-types";
 
 import assert from "assert";
 import { BigNumber, Wallet } from "ethers";
@@ -42,22 +42,22 @@ async function deployMultiSigWallet(
         : undefined;
 }
 
-async function deployToken(deployer: Wallet, owner: string, feeAccount: string, maxSupply: BigNumber): Promise<ACC> {
-    const factory = await ethers.getContractFactory("ACC");
-    const contract = (await factory.connect(deployer).deploy(owner, feeAccount, maxSupply)) as ACC;
+async function deployToken(deployer: Wallet, owner: string, feeAccount: string, maxSupply: BigNumber): Promise<KIOS> {
+    const factory = await ethers.getContractFactory("KIOS");
+    const contract = (await factory.connect(deployer).deploy(owner, feeAccount, maxSupply)) as KIOS;
     await contract.deployed();
     await contract.deployTransaction.wait();
     return contract;
 }
 
-describe("Test for ACC token", () => {
+describe("Test for KIOS token", () => {
     const raws = HardhatAccount.keys.map((m) => new Wallet(m, ethers.provider));
     const [deployer, feeAccount, account0, account1, account2, account3, account4, account5] = raws;
     const owners1 = [account0, account1, account2];
 
     let multiSigFactory: MultiSigWalletFactory;
     let multiSigWallet: MultiSigWallet | undefined;
-    let token: ACC;
+    let token: KIOS;
     const requiredConfirmations = 2;
 
     before(async () => {

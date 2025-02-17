@@ -4,7 +4,7 @@ pragma solidity ^0.8.2;
 
 import "loyalty-tokens/contracts/LoyaltyToken.sol";
 
-contract ACC is LoyaltyToken {
+contract KIOS is LoyaltyToken {
     /*
      * Public functions
      */
@@ -12,5 +12,5 @@ contract ACC is LoyaltyToken {
         address account_,
         address feeAccount_,
         uint256 maxSupply_
-    ) LoyaltyToken("ACC Coin", "ACC", account_, feeAccount_, maxSupply_) {}
+    ) LoyaltyToken("KIOS", "KIOS", account_, feeAccount_, maxSupply_) {}
 }
