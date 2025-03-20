@@ -9,6 +9,7 @@
         "test": "hardhat test",
         "clean": "hardhat clean",
         "build": "hardhat compile",
+        "deploy:outer_chain_devnet": "hardhat run deploy/outer_chain_devnet/deploy.ts --network outer_chain_devnet",
         "deploy:main_chain_devnet": "hardhat run deploy/main_chain_devnet/deploy.ts --network main_chain_devnet",
         "deploy:side_chain_devnet": "hardhat run deploy/side_chain_devnet/deploy.ts --network side_chain_devnet",
         "lint": "tslint --config tslint.json \\\"{src,test}/**/*.ts\\\"",
