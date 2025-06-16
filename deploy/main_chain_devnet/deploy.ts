@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { HardhatAccount } from "../../src/HardhatAccount";
 import { BOACoin } from "../../src/utils/Amount";
 import { ContractUtils } from "../../src/utils/ContractUtils";
-import { KIOS, MultiSigWallet, MultiSigWalletFactory } from "../../typechain-types";
+import { KIOS, MultiSigWallet, MultiSigWalletFactory, SKIOS } from "../../typechain-types";
 
 import { BaseContract, BigNumber, Contract, Wallet } from "ethers";
 
@@ -16,6 +16,12 @@ export const MULTI_SIG_WALLET_FACTORY_ADDRESS: { [key: string]: string } = {
     bosagora_mainnet: "0xF120890C71B2B9fF4578088A398a2402Ae0d3616",
     bosagora_testnet: "0xF120890C71B2B9fF4578088A398a2402Ae0d3616",
     bosagora_devnet: "0xF120890C71B2B9fF4578088A398a2402Ae0d3616",
+};
+
+export const SKIOS_OWNER: { [key: string]: string } = {
+    bosagora_mainnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
+    bosagora_testnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
+    bosagora_devnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
 };
 
 interface IDeployedContract {
@@ -215,14 +221,32 @@ async function deployToken(accounts: IAccount, deployment: Deployments) {
     console.log(`Deployed ${contractName} to ${contract.address}`);
 }
 
+async function deploySToken(accounts: IAccount, deployment: Deployments) {
+    const contractName = "SKIOS";
+    console.log(`Deploy ${contractName}...`);
+
+    const owner = SKIOS_OWNER[network];
+    const factory = await ethers.getContractFactory("SKIOS");
+    const contract = (await factory.connect(accounts.deployer).deploy(owner)) as SKIOS;
+    await contract.deployed();
+    await contract.deployTransaction.wait();
+
+    const balance = await contract.balanceOf(owner);
+    console.log(`SKIOS token's owner: ${owner}`);
+    console.log(`SKIOS token's balance of owner: ${new BOACoin(balance).toDisplayString(true, 2)}`);
+
+    deployment.addContract(contractName, contract.address, contract);
+    console.log(`Deployed ${contractName} to ${contract.address}`);
+}
+
 async function main() {
     const deployments = new Deployments();
 
     await deployments.attachPreviousContracts();
 
-    // deployments.addDeployer(deployMultiSigWalletFactory);
     deployments.addDeployer(deployMultiSigWallet);
     deployments.addDeployer(deployToken);
+    deployments.addDeployer(deploySToken);
 
     await deployments.loadContractInfo();
 
