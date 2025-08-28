@@ -21,7 +21,7 @@ export const MULTI_SIG_WALLET_FACTORY_ADDRESS: { [key: string]: string } = {
 export const SKIOS_OWNER: { [key: string]: string } = {
     bosagora_mainnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
     bosagora_testnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
-    bosagora_devnet: "0xdD2721205006d001Aa64036d72cA9CA22c6550d9",
+    bosagora_devnet: "0x31f2B0cA552625402046545ca155f8B2F21E09a0",
 };
 
 interface IDeployedContract {
